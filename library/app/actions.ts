@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { addBook, deleteBook, updateBook } from "../db";
+import { addBook, addMember, deleteBook, updateBook } from "../db";
 
 export type ActionState = {
   message: string;
@@ -130,4 +130,21 @@ export async function deleteBookAction(
 
   revalidatePath("/");
   return { message: "Book deleted.", status: "success" };
+}
+
+export async function addMemberAction(
+  _previousState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const name = getFormString(formData, "name");
+  const phone = getFormString(formData, "phone");
+
+  if (!name) {
+    return { message: "Enter a member name.", status: "error" };
+  }
+
+  await addMember(name, phone || null);
+  revalidatePath("/members");
+
+  return { message: `${name} was added as a member.`, status: "success" };
 }

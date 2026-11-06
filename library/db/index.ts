@@ -10,6 +10,12 @@ export type BookRow = {
   dueOn: string | null;
 };
 
+export type MemberRow = {
+  id: number;
+  name: string;
+  phone: string | null;
+};
+
 let client: ReturnType<typeof postgres> | undefined;
 
 function getClient() {
@@ -43,6 +49,21 @@ export async function getBooks() {
       and loans.returned_on is null
     left join members on members.id = loans.member_id
     order by lower(books.title), books.id
+  `;
+}
+
+export async function getMembers() {
+  return getClient()<MemberRow[]>`
+    select id, name, phone
+    from members
+    order by lower(name), id
+  `;
+}
+
+export async function addMember(name: string, phone: string | null) {
+  await getClient()`
+    insert into members (name, phone)
+    values (${name}, ${phone})
   `;
 }
 
