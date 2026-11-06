@@ -2,74 +2,93 @@ import { Suspense } from "react";
 import AddMemberForm from "../add-member-form";
 import { getMembers } from "../../db";
 
-async function MembersList() {
+function getInitials(name: string) {
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("");
+}
+
+async function MembersDashboard() {
   const members = await getMembers();
 
   return (
-    <section aria-label="Members">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-stone-500">
-          All members
-        </h2>
-        <span className="rounded-full bg-stone-200 px-3 py-1 text-sm font-medium text-stone-700">
-          {members.length} {members.length === 1 ? "member" : "members"}
-        </span>
-      </div>
+    <>
+      <div className="members-layout">
+        <section aria-label="Members directory" className="collection-column">
+          <div className="collection-heading">
+            <h2>Our readers</h2>
+            <span className="count-label">
+              {members.length} {members.length === 1 ? "member" : "members"}
+            </span>
+          </div>
 
-      {members.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-stone-300 bg-white p-8 text-center text-stone-600">
-          No members yet. Add the first one above.
-        </p>
-      ) : (
-        <ul className="divide-y divide-stone-200 overflow-hidden rounded-2xl border border-stone-200 bg-white">
-          {members.map((member) => (
-            <li
-              className="flex flex-col gap-1 p-5 sm:flex-row sm:items-center sm:justify-between sm:px-6"
-              key={member.id}
-            >
-              <h3 className="font-semibold text-stone-900">{member.name}</h3>
-              <p className="text-sm text-stone-600">
-                {member.phone || "No phone number"}
+          {members.length === 0 ? (
+            <div className="empty-state">
+              <span aria-hidden="true" className="empty-state-mark">♙</span>
+              <p>
+                Your library community starts here. Add the first member to
+                welcome them in.
               </p>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
+            </div>
+          ) : (
+            <ul className="member-grid">
+              {members.map((member, index) => (
+                <li className="member-card" key={member.id}>
+                  <span
+                    aria-hidden="true"
+                    className={`member-avatar avatar-${(index % 5) + 1}`}
+                  >
+                    {getInitials(member.name)}
+                  </span>
+                  <div className="member-details">
+                    <h3 className="member-name">{member.name}</h3>
+                    <p className="member-contact">
+                      {member.phone || "Phone not provided"}
+                    </p>
+                  </div>
+                  <span aria-hidden="true" className="member-card-arrow">↗</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <aside aria-label="Add a member" className="members-sidebar">
+          <AddMemberForm />
+          <div className="tip-card member-tip">
+            <span aria-hidden="true">✦</span>
+            <p>
+              A shared love of reading brings neighbors a little closer.
+            </p>
+          </div>
+        </aside>
+      </div>
+    </>
   );
 }
 
 function MembersLoading() {
   return (
-    <section
-      aria-label="Loading members"
-      aria-busy="true"
-      className="rounded-2xl border border-stone-200 bg-white p-6 text-sm text-stone-500"
-    >
-      Loading members…
-    </section>
+    <div aria-busy="true" className="loading-card">
+      Gathering the community…
+    </div>
   );
 }
 
 export default function MembersPage() {
   return (
-    <main className="mx-auto w-full max-w-5xl flex-1 space-y-10 px-5 py-12 sm:px-8 sm:py-16">
-      <header>
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-800">
-          Community library
-        </p>
-        <h1 className="mt-3 text-4xl font-semibold tracking-tight text-stone-950 sm:text-5xl">
-          Members
-        </h1>
-        <p className="mt-4 max-w-xl text-base leading-7 text-stone-600">
-          Manage the people who borrow books from the library.
-        </p>
+    <main className="members-catalog-main">
+      <header className="catalog-title-row members-title-row">
+        <div className="catalog-title-wrap">
+          <h1>Members</h1>
+          <span className="catalog-title-chevron">›</span>
+        </div>
       </header>
-
-      <AddMemberForm />
-
       <Suspense fallback={<MembersLoading />}>
-        <MembersList />
+        <MembersDashboard />
       </Suspense>
     </main>
   );

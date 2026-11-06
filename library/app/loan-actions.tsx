@@ -56,7 +56,7 @@ export default function LoanActions({
         <form action={returnFormAction}>
           <input name="bookId" type="hidden" value={bookId} />
           <button
-            className="rounded-lg border border-stone-300 px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-800 disabled:cursor-not-allowed disabled:opacity-60"
+            className="secondary-button disabled:cursor-not-allowed disabled:opacity-60"
             disabled={isReturning}
             type="submit"
           >
@@ -84,7 +84,7 @@ export default function LoanActions({
           Member to lend to
         </label>
         <select
-          className="max-w-56 rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-sm text-stone-800 outline-none focus:border-emerald-700 focus:ring-2 focus:ring-emerald-700/20"
+          className="form-input min-h-[33px] max-w-56 py-1.5"
           defaultValue=""
           id={`member-${bookId}`}
           name="memberId"
@@ -100,7 +100,7 @@ export default function LoanActions({
           ))}
         </select>
         <button
-          className="rounded-lg bg-emerald-800 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-800 disabled:cursor-not-allowed disabled:opacity-60"
+          className="primary-button min-h-[33px] px-3 disabled:cursor-not-allowed"
           disabled={isLending}
           type="submit"
         >
