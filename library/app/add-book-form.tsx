@@ -1,12 +1,14 @@
 "use client";
 
 import { useActionState } from "react";
-import { addBookAction, emptyState } from "./actions";
+import { addBookAction, type ActionState } from "./actions";
+
+const initialState: ActionState = { message: "", status: null };
 
 export default function AddBookForm() {
   const [state, formAction, isPending] = useActionState(
     addBookAction,
-    emptyState,
+    initialState,
   );
 
   return (

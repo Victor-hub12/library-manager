@@ -3,10 +3,12 @@
 import { useActionState, useState } from "react";
 import {
   deleteBookAction,
-  emptyState,
   updateBookAction,
+  type ActionState,
 } from "./actions";
 import type { BookRow } from "../db";
+
+const initialState: ActionState = { message: "", status: null };
 
 type BookActionsProps = {
   book: BookRow;
@@ -16,11 +18,11 @@ export default function BookActions({ book }: BookActionsProps) {
   const [editing, setEditing] = useState(false);
   const [editState, editFormAction, isSaving] = useActionState(
     updateBookAction,
-    emptyState,
+    initialState,
   );
   const [deleteState, deleteFormAction, isDeleting] = useActionState(
     deleteBookAction,
-    emptyState,
+    initialState,
   );
 
   return (
@@ -59,6 +61,7 @@ export default function BookActions({ book }: BookActionsProps) {
         <form
           action={editFormAction}
           className="mt-3 grid basis-full gap-3 rounded-xl bg-stone-50 p-4 sm:grid-cols-3"
+          key={`${book.id}-${book.title}-${book.author}-${book.year}`}
         >
           <input name="id" type="hidden" value={book.id} />
           <div>

@@ -8,21 +8,28 @@ export type ActionState = {
   status: "error" | "success" | null;
 };
 
-const emptyState: ActionState = { message: "", status: null };
 const currentYear = () => new Date().getFullYear();
+
+type BookValidation =
+  | { ok: true; year: number }
+  | { ok: false; error: string };
 
 function getFormString(formData: FormData, key: string) {
   const value = formData.get(key);
   return typeof value === "string" ? value.trim() : "";
 }
 
-function validateBook(title: string, author: string, yearInput: string) {
+function validateBook(
+  title: string,
+  author: string,
+  yearInput: string,
+): BookValidation {
   if (!title) {
-    return { error: "Enter a book title." } as const;
+    return { ok: false, error: "Enter a book title." };
   }
 
   if (!author) {
-    return { error: "Enter an author name." } as const;
+    return { ok: false, error: "Enter an author name." };
   }
 
   const year = Number(yearInput);
@@ -35,11 +42,12 @@ function validateBook(title: string, author: string, yearInput: string) {
     year > latestYear
   ) {
     return {
+      ok: false,
       error: `Enter a valid year between 1 and ${latestYear}.`,
-    } as const;
+    };
   }
 
-  return { year } as const;
+  return { ok: true, year };
 }
 
 function getBookId(formData: FormData) {
@@ -61,7 +69,7 @@ export async function addBookAction(
   const yearInput = getFormString(formData, "year");
   const validation = validateBook(title, author, yearInput);
 
-  if ("error" in validation) {
+  if (!validation.ok) {
     return { message: validation.error, status: "error" };
   }
 
@@ -85,18 +93,13 @@ export async function updateBookAction(
   const yearInput = getFormString(formData, "year");
   const validation = validateBook(title, author, yearInput);
 
-  if ("error" in validation) {
+  if (!validation.ok) {
     return { message: validation.error, status: "error" };
   }
 
-  try {
-    await updateBook(id, title, author, validation.year);
-  } catch (error) {
-    if (error instanceof Error && error.message === "That book no longer exists.") {
-      return { message: error.message, status: "error" };
-    }
-
-    throw error;
+  const updated = await updateBook(id, title, author, validation.year);
+  if (!updated) {
+    return { message: "This book no longer exists.", status: "error" };
   }
 
   revalidatePath("/");
@@ -128,5 +131,3 @@ export async function deleteBookAction(
   revalidatePath("/");
   return { message: "Book deleted.", status: "success" };
 }
-
-export { emptyState };

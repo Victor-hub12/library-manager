@@ -46,21 +46,6 @@ export async function getBooks() {
   `;
 }
 
-async function findOrCreateAuthor(name: string) {
-  const [author] = await getClient()<{ id: number }[]>`
-    insert into authors (name)
-    values (${name})
-    on conflict (name) do update set name = excluded.name
-    returning id
-  `;
-
-  if (!author) {
-    throw new Error("The author could not be saved.");
-  }
-
-  return author.id;
-}
-
 export async function addBook(title: string, authorName: string, year: number) {
   await getClient().begin(async (transaction) => {
     const [author] = await transaction<{ id: number }[]>`
@@ -87,7 +72,7 @@ export async function updateBook(
   authorName: string,
   year: number,
 ) {
-  await getClient().begin(async (transaction) => {
+  return getClient().begin(async (transaction) => {
     const [book] = await transaction<{ id: number }[]>`
       select id from books where id = ${id} for update
     `;
@@ -114,10 +99,6 @@ export async function updateBook(
     `;
 
     return true;
-  }).then((updated) => {
-    if (!updated) {
-      throw new Error("That book no longer exists.");
-    }
   });
 }
 
