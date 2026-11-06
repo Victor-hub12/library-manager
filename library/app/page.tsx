@@ -1,69 +1,103 @@
-import Image from "next/image";
+import { Suspense } from "react";
+import { getBooks } from "../db";
+
+function formatDueDate(dueOn: string) {
+  return new Intl.DateTimeFormat("en", {
+    dateStyle: "medium",
+    timeZone: "UTC",
+  }).format(new Date(`${dueOn}T00:00:00Z`));
+}
+
+async function BooksList() {
+  const books = await getBooks();
+
+  return (
+    <section aria-label="Books" className="mt-10">
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-stone-500">
+          All books
+        </h2>
+        <span className="rounded-full bg-stone-200 px-3 py-1 text-sm font-medium text-stone-700">
+          {books.length} {books.length === 1 ? "book" : "books"}
+        </span>
+      </div>
+
+      {books.length === 0 ? (
+        <p className="rounded-2xl border border-dashed border-stone-300 bg-white p-8 text-center text-stone-600">
+          No books yet.
+        </p>
+      ) : (
+        <ul className="divide-y divide-stone-200 overflow-hidden rounded-2xl border border-stone-200 bg-white">
+          {books.map((book) => (
+            <li
+              key={book.id}
+              className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:px-6"
+            >
+              <div className="min-w-0">
+                <h3 className="font-semibold text-stone-900">{book.title}</h3>
+                <p className="mt-1 text-sm text-stone-600">
+                  {book.author}
+                  {book.year !== null && (
+                    <span className="text-stone-400"> · {book.year}</span>
+                  )}
+                </p>
+              </div>
+
+              {book.member && book.dueOn ? (
+                <p className="inline-flex w-fit items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-900">
+                  <span
+                    aria-hidden="true"
+                    className="size-2 rounded-full bg-amber-500"
+                  />
+                  On loan to {book.member}, due {formatDueDate(book.dueOn)}
+                </p>
+              ) : (
+                <p className="inline-flex w-fit items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-900">
+                  <span
+                    aria-hidden="true"
+                    className="size-2 rounded-full bg-emerald-500"
+                  />
+                  Available
+                </p>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function BooksLoading() {
+  return (
+    <section
+      aria-label="Loading books"
+      aria-busy="true"
+      className="mt-10 rounded-2xl border border-stone-200 bg-white p-6 text-sm text-stone-500"
+    >
+      Loading books…
+    </section>
+  );
+}
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <main className="mx-auto w-full max-w-5xl flex-1 px-5 py-12 sm:px-8 sm:py-16">
+      <header>
+        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-800">
+          Community library
+        </p>
+        <h1 className="mt-3 text-4xl font-semibold tracking-tight text-stone-950 sm:text-5xl">
+          Books
+        </h1>
+        <p className="mt-4 max-w-xl text-base leading-7 text-stone-600">
+          Browse the collection and see what’s available on the shelf.
+        </p>
+      </header>
+
+      <Suspense fallback={<BooksLoading />}>
+        <BooksList />
+      </Suspense>
+    </main>
   );
 }
