@@ -67,6 +67,75 @@ export async function addMember(name: string, phone: string | null) {
   `;
 }
 
+export async function lendBook(bookId: number, memberId: number) {
+  return getClient().begin(async (transaction) => {
+    const [book] = await transaction<{ id: number }[]>`
+      select id from books where id = ${bookId} for update
+    `;
+
+    if (!book) {
+      return "not-found" as const;
+    }
+
+    const [openLoan] = await transaction<{ id: number }[]>`
+      select id
+      from loans
+      where book_id = ${bookId} and returned_on is null
+      limit 1
+    `;
+
+    if (openLoan) {
+      return "already-on-loan" as const;
+    }
+
+    const [member] = await transaction<{ id: number }[]>`
+      select id from members where id = ${memberId}
+    `;
+
+    if (!member) {
+      return "member-not-found" as const;
+    }
+
+    await transaction`
+      insert into loans (book_id, member_id, borrowed_on, due_on)
+      values (${bookId}, ${memberId}, current_date, current_date + 14)
+    `;
+
+    return "lent" as const;
+  });
+}
+
+export async function returnBook(bookId: number) {
+  return getClient().begin(async (transaction) => {
+    const [book] = await transaction<{ id: number }[]>`
+      select id from books where id = ${bookId} for update
+    `;
+
+    if (!book) {
+      return "not-found" as const;
+    }
+
+    const [openLoan] = await transaction<{ id: number }[]>`
+      select id
+      from loans
+      where book_id = ${bookId} and returned_on is null
+      limit 1
+    `;
+
+    if (!openLoan) {
+      return "already-returned" as const;
+    }
+
+    await transaction`
+      update loans
+      set returned_on = current_date
+      where id = ${openLoan.id}
+    `;
+
+    return "returned" as const;
+  });
+}
+
 export async function addBook(title: string, authorName: string, year: number) {
   await getClient().begin(async (transaction) => {
     const [author] = await transaction<{ id: number }[]>`

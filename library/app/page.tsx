@@ -1,7 +1,8 @@
 import { Suspense } from "react";
 import AddBookForm from "./add-book-form";
 import BookActions from "./book-actions";
-import { getBooks } from "../db";
+import LoanActions from "./loan-actions";
+import { getBooks, getMembers } from "../db";
 
 function formatDueDate(dueOn: string) {
   return new Intl.DateTimeFormat("en", {
@@ -11,7 +12,7 @@ function formatDueDate(dueOn: string) {
 }
 
 async function BooksList() {
-  const books = await getBooks();
+  const [books, members] = await Promise.all([getBooks(), getMembers()]);
 
   return (
     <section aria-label="Books">
@@ -62,7 +63,14 @@ async function BooksList() {
                     </p>
                   )}
                 </div>
-                <BookActions book={book} />
+                <div className="flex flex-col items-start gap-3 sm:items-end">
+                  <LoanActions
+                    bookId={book.id}
+                    isOnLoan={Boolean(book.member)}
+                    members={members}
+                  />
+                  <BookActions book={book} />
+                </div>
               </div>
             </li>
           ))}
