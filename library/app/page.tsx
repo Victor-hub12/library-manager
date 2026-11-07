@@ -1,109 +1,26 @@
 import { Suspense } from "react";
-import AddBookForm from "./add-book-form";
-import BookActions from "./book-actions";
-import { getBooks } from "../db";
+import BookCatalog from "./book-catalog";
+import { getBooks, getMembers } from "../db";
 
-function formatDueDate(dueOn: string) {
-  return new Intl.DateTimeFormat("en", {
-    dateStyle: "medium",
-    timeZone: "UTC",
-  }).format(new Date(`${dueOn}T00:00:00Z`));
+async function BooksPageContent() {
+  const [books, members] = await Promise.all([getBooks(), getMembers()]);
+  return <BookCatalog books={books} members={members} />;
 }
 
-async function BooksList() {
-  const books = await getBooks();
-
+function CatalogLoading() {
   return (
-    <section aria-label="Books">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-stone-500">
-          All books
-        </h2>
-        <span className="rounded-full bg-stone-200 px-3 py-1 text-sm font-medium text-stone-700">
-          {books.length} {books.length === 1 ? "book" : "books"}
-        </span>
+    <main className="catalog-main">
+      <div aria-busy="true" className="catalog-loading">
+        Loading your books…
       </div>
-
-      {books.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-stone-300 bg-white p-8 text-center text-stone-600">
-          No books yet. Add the first one above.
-        </p>
-      ) : (
-        <ul className="divide-y divide-stone-200 overflow-hidden rounded-2xl border border-stone-200 bg-white">
-          {books.map((book) => (
-            <li
-              key={book.id}
-              className="p-5 sm:px-6 sm:py-5"
-            >
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                  <h3 className="font-semibold text-stone-900">{book.title}</h3>
-                  <p className="mt-1 text-sm text-stone-600">
-                    {book.author}
-                    {book.year !== null && (
-                      <span className="text-stone-400"> · {book.year}</span>
-                    )}
-                  </p>
-                  {book.member && book.dueOn ? (
-                    <p className="mt-2 inline-flex w-fit items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-900">
-                      <span
-                        aria-hidden="true"
-                        className="size-2 rounded-full bg-amber-500"
-                      />
-                      On loan to {book.member}, due {formatDueDate(book.dueOn)}
-                    </p>
-                  ) : (
-                    <p className="mt-2 inline-flex w-fit items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-900">
-                      <span
-                        aria-hidden="true"
-                        className="size-2 rounded-full bg-emerald-500"
-                      />
-                      Available
-                    </p>
-                  )}
-                </div>
-                <BookActions book={book} />
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
-  );
-}
-
-function BooksLoading() {
-  return (
-    <section
-      aria-label="Loading books"
-      aria-busy="true"
-      className="rounded-2xl border border-stone-200 bg-white p-6 text-sm text-stone-500"
-    >
-      Loading books…
-    </section>
+    </main>
   );
 }
 
 export default function Home() {
   return (
-    <main className="mx-auto w-full max-w-5xl flex-1 space-y-10 px-5 py-12 sm:px-8 sm:py-16">
-      <header>
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-800">
-          Community library
-        </p>
-        <h1 className="mt-3 text-4xl font-semibold tracking-tight text-stone-950 sm:text-5xl">
-          Books
-        </h1>
-        <p className="mt-4 max-w-xl text-base leading-7 text-stone-600">
-          Browse the collection and see what’s available on the shelf.
-        </p>
-      </header>
-
-      <AddBookForm />
-
-      <Suspense fallback={<BooksLoading />}>
-        <BooksList />
-      </Suspense>
-    </main>
+    <Suspense fallback={<CatalogLoading />}>
+      <BooksPageContent />
+    </Suspense>
   );
 }

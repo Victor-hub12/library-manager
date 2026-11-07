@@ -1,7 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { addBook, deleteBook, updateBook } from "../db";
+import {
+  addBook,
+  addMember,
+  deleteBook,
+  lendBook,
+  returnBook,
+  updateBook,
+} from "../db";
 
 export type ActionState = {
   message: string;
@@ -52,6 +59,16 @@ function validateBook(
 
 function getBookId(formData: FormData) {
   const idInput = getFormString(formData, "id");
+  if (!/^[1-9]\d*$/.test(idInput)) {
+    return null;
+  }
+
+  const id = Number(idInput);
+  return Number.isSafeInteger(id) ? id : null;
+}
+
+function getPositiveId(formData: FormData, key: string) {
+  const idInput = getFormString(formData, key);
   if (!/^[1-9]\d*$/.test(idInput)) {
     return null;
   }
@@ -130,4 +147,78 @@ export async function deleteBookAction(
 
   revalidatePath("/");
   return { message: "Book deleted.", status: "success" };
+}
+
+export async function addMemberAction(
+  _previousState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const name = getFormString(formData, "name");
+  const phone = getFormString(formData, "phone");
+
+  if (!name) {
+    return { message: "Enter a member name.", status: "error" };
+  }
+
+  await addMember(name, phone || null);
+  revalidatePath("/members");
+
+  return { message: `${name} was added as a member.`, status: "success" };
+}
+
+export async function lendBookAction(
+  _previousState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const bookId = getPositiveId(formData, "bookId");
+  const memberId = getPositiveId(formData, "memberId");
+
+  if (bookId === null) {
+    return { message: "This book has an invalid ID.", status: "error" };
+  }
+
+  if (memberId === null) {
+    return { message: "Choose a member to lend this book to.", status: "error" };
+  }
+
+  const result = await lendBook(bookId, memberId);
+
+  if (result === "already-on-loan") {
+    return { message: "This book is already on loan.", status: "error" };
+  }
+
+  if (result === "member-not-found") {
+    return { message: "That member no longer exists.", status: "error" };
+  }
+
+  if (result === "not-found") {
+    return { message: "This book no longer exists.", status: "error" };
+  }
+
+  revalidatePath("/");
+  return { message: "Book lent for 14 days.", status: "success" };
+}
+
+export async function returnBookAction(
+  _previousState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const bookId = getPositiveId(formData, "bookId");
+
+  if (bookId === null) {
+    return { message: "This book has an invalid ID.", status: "error" };
+  }
+
+  const result = await returnBook(bookId);
+
+  if (result === "already-returned") {
+    return { message: "This book is already marked as available.", status: "error" };
+  }
+
+  if (result === "not-found") {
+    return { message: "This book no longer exists.", status: "error" };
+  }
+
+  revalidatePath("/");
+  return { message: "Book returned and marked available.", status: "success" };
 }
