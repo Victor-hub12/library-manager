@@ -29,6 +29,12 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
+## Database updates
+
+The initial database schema is in `db/schema.sql`. For an existing database,
+run the SQL files in `db/migrations/` in filename order in the Supabase SQL
+Editor before deploying changes that depend on them.
+
 ## Deploy on Vercel
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.

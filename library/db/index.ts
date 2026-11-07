@@ -16,6 +16,14 @@ export type MemberRow = {
   phone: string | null;
 };
 
+export type TrashBookRow = {
+  id: number;
+  title: string;
+  year: number | null;
+  author: string;
+  deletedAt: string;
+};
+
 let client: ReturnType<typeof postgres> | undefined;
 
 function getClient() {
@@ -48,7 +56,23 @@ export async function getBooks() {
       on loans.book_id = books.id
       and loans.returned_on is null
     left join members on members.id = loans.member_id
+    where books.deleted_at is null
     order by lower(books.title), books.id
+  `;
+}
+
+export async function getTrashedBooks() {
+  return getClient()<TrashBookRow[]>`
+    select
+      books.id,
+      books.title,
+      books.year,
+      authors.name as author,
+      to_char(books.deleted_at at time zone 'UTC', 'YYYY-MM-DD') as "deletedAt"
+    from books
+    join authors on authors.id = books.author_id
+    where books.deleted_at is not null
+    order by books.deleted_at desc, books.id
   `;
 }
 
@@ -70,7 +94,7 @@ export async function addMember(name: string, phone: string | null) {
 export async function lendBook(bookId: number, memberId: number) {
   return getClient().begin(async (transaction) => {
     const [book] = await transaction<{ id: number }[]>`
-      select id from books where id = ${bookId} for update
+      select id from books where id = ${bookId} and deleted_at is null for update
     `;
 
     if (!book) {
@@ -108,7 +132,7 @@ export async function lendBook(bookId: number, memberId: number) {
 export async function returnBook(bookId: number) {
   return getClient().begin(async (transaction) => {
     const [book] = await transaction<{ id: number }[]>`
-      select id from books where id = ${bookId} for update
+      select id from books where id = ${bookId} and deleted_at is null for update
     `;
 
     if (!book) {
@@ -164,7 +188,7 @@ export async function updateBook(
 ) {
   return getClient().begin(async (transaction) => {
     const [book] = await transaction<{ id: number }[]>`
-      select id from books where id = ${id} for update
+      select id from books where id = ${id} and deleted_at is null for update
     `;
 
     if (!book) {
@@ -195,7 +219,7 @@ export async function updateBook(
 export async function deleteBook(id: number) {
   return getClient().begin(async (transaction) => {
     const [book] = await transaction<{ id: number }[]>`
-      select id from books where id = ${id} for update
+      select id from books where id = ${id} and deleted_at is null for update
     `;
 
     if (!book) {
@@ -213,7 +237,45 @@ export async function deleteBook(id: number) {
       return "on-loan" as const;
     }
 
+    await transaction`
+      update books
+      set deleted_at = current_timestamp
+      where id = ${id}
+    `;
+    return "trashed" as const;
+  });
+}
+
+export async function restoreBook(id: number) {
+  return getClient().begin(async (transaction) => {
+    const [book] = await transaction<{ id: number }[]>`
+      select id from books where id = ${id} and deleted_at is not null for update
+    `;
+
+    if (!book) {
+      return false;
+    }
+
+    await transaction`
+      update books
+      set deleted_at = null
+      where id = ${id}
+    `;
+    return true;
+  });
+}
+
+export async function permanentlyDeleteBook(id: number) {
+  return getClient().begin(async (transaction) => {
+    const [book] = await transaction<{ id: number }[]>`
+      select id from books where id = ${id} and deleted_at is not null for update
+    `;
+
+    if (!book) {
+      return false;
+    }
+
     await transaction`delete from books where id = ${id}`;
-    return "deleted" as const;
+    return true;
   });
 }

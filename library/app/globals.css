@@ -475,6 +475,43 @@ body {
   border-top: 1px solid #edf0eb;
 }
 
+.trash-description {
+  margin: -8px 0 22px;
+  color: #7a8279;
+  font-size: 12px;
+}
+
+.trash-book-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.trash-book-details {
+  min-width: 0;
+  flex: 1;
+}
+
+.trash-book-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.trash-action-message {
+  flex-basis: 100%;
+  margin: 0;
+  color: #49714f;
+  font-size: 11px;
+}
+
+.trash-action-message.error {
+  color: #a45b4e;
+}
+
 .book-cover {
   display: grid;
   width: 43px;
@@ -1762,6 +1799,18 @@ body {
 .members-title-row {
   justify-content: flex-start;
   margin-bottom: 20px;
+}
+
+.trash-description {
+  color: #a2ada4;
+}
+
+.trash-action-message {
+  color: #a4d0ad;
+}
+
+.trash-action-message.error {
+  color: #f0aaa0;
 }
 
 .members-layout {

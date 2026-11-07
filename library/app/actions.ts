@@ -6,7 +6,9 @@ import {
   addMember,
   deleteBook,
   lendBook,
+  permanentlyDeleteBook,
   returnBook,
+  restoreBook,
   updateBook,
 } from "../db";
 
@@ -145,8 +147,51 @@ export async function deleteBookAction(
     return { message: "This book no longer exists.", status: "error" };
   }
 
+  revalidateBookLists();
+  return { message: "Book moved to Trash.", status: "success" };
+}
+
+function revalidateBookLists() {
   revalidatePath("/");
-  return { message: "Book deleted.", status: "success" };
+  revalidatePath("/trash");
+  revalidatePath("/api/books");
+}
+
+export async function restoreBookAction(
+  _previousState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const id = getBookId(formData);
+  if (id === null) {
+    return { message: "This book has an invalid ID.", status: "error" };
+  }
+
+  const restored = await restoreBook(id);
+  if (!restored) {
+    return { message: "This book is no longer in Trash.", status: "error" };
+  }
+
+  revalidateBookLists();
+  return { message: "Book restored to the library.", status: "success" };
+}
+
+export async function permanentlyDeleteBookAction(
+  _previousState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const id = getBookId(formData);
+  if (id === null) {
+    return { message: "This book has an invalid ID.", status: "error" };
+  }
+
+  const deleted = await permanentlyDeleteBook(id);
+  if (!deleted) {
+    return { message: "This book is no longer in Trash.", status: "error" };
+  }
+
+  revalidatePath("/trash");
+  revalidatePath("/api/books");
+  return { message: "Book permanently deleted.", status: "success" };
 }
 
 export async function addMemberAction(

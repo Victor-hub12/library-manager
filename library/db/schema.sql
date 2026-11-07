@@ -6,8 +6,10 @@ create table books (
 id serial primary key,
 title text not null,
 year integer,
-author_id integer not null references authors (id)
+author_id integer not null references authors (id),
+deleted_at timestamptz
 );
+create index books_deleted_at_idx on books (deleted_at) where deleted_at is not null;
 
 create table members (
 id serial primary key,

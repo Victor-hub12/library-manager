@@ -41,7 +41,7 @@ export default function BookActions({ book }: BookActionsProps) {
           disabled={isDeleting}
           type="submit"
         >
-          {isDeleting ? "Deleting…" : "Delete"}
+          {isDeleting ? "Moving…" : "Move to Trash"}
         </button>
       </form>
       {deleteState.message && (

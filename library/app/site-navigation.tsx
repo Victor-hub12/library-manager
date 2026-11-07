@@ -37,9 +37,24 @@ function MembersIcon() {
   );
 }
 
+function TrashIcon() {
+  return (
+    <svg aria-hidden="true" fill="none" viewBox="0 0 24 24">
+      <path
+        d="M4 7h16m-10 4v6m4-6v6M6 7l1 14h10l1-14M9 7V4h6v3"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.7"
+      />
+    </svg>
+  );
+}
+
 const links = [
   { href: "/", label: "Library", Icon: BooksIcon },
   { href: "/members", label: "Members", Icon: MembersIcon },
+  { href: "/trash", label: "Trash", Icon: TrashIcon },
 ];
 
 export default function SiteNavigation() {
@@ -78,6 +93,14 @@ export default function SiteNavigation() {
           >
             <span className="nav-icon"><MembersIcon /></span>
             Members
+          </Link>
+          <Link
+            aria-current={pathname === "/trash" ? "page" : undefined}
+            className={`side-nav-link${pathname === "/trash" ? " active" : ""}`}
+            href="/trash"
+          >
+            <span className="nav-icon"><TrashIcon /></span>
+            Trash
           </Link>
         </nav>
 
